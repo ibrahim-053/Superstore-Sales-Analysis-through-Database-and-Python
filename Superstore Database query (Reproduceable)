@@ -1,0 +1,209 @@
+1. Query used for generating Customer Table;
+
+DROP TABLE Customers;
+
+CREATE TABLE Customers (
+    "Customer ID" VARCHAR(20) PRIMARY KEY,
+    Segment VARCHAR(50),
+    Country VARCHAR(50),
+    City VARCHAR(50),
+    State VARCHAR(50),
+    "Postal Code" VARCHAR(20),
+    Region VARCHAR(50),
+    "Customer Name" VARCHAR(100)
+);
+
+NOTE: This query allows both alphanumeric values and ensures uniqueness for the combination 
+of 'Customer ID' and ignores duplicates for other fields ('Segment', 'Country', 'City', 'State', 'Postal Code', 'Region')
+For this dataset, it was important to keep duplicate customers based on the analysis we intend to perform because the Order ID is unique to every order, at such, a customer could appear more than once. Hence, duplicate customer was kept.
+In ensuring that pgadmin was able to copy duplicate data from the csv, the customers_pkey was altered to allow for duplicates using this code;
+
+ALTER TABLE Customers DROP CONSTRAINT customers_pkey;
+
+See the customers copy query below;
+
+COPY Customers("Customer ID", Segment, Country, City, State, "Postal Code", Region, "Customer Name")
+FROM 'C:/Users/home/Desktop/Superstores/Cust.csv'
+DELIMITER ',' CSV HEADER;
+
+
+
+2. Query used for generating Orders Table;
+
+CREATE TABLE Orders (
+    OrderID SERIAL PRIMARY KEY,
+    OrderDate DATE,
+    ShipDate DATE,
+    ShipMode VARCHAR(50),
+    CustomerID INT REFERENCES Customers(CustomerID)
+);
+
+In keeping duplicate customer ID in the order table, the unique constraint named "orders_pkey" on the "Order ID" column was dropped before copy operation;
+
+ALTER TABLE Orders DROP CONSTRAINT orders_pkey;
+
+See the order copy query below
+
+COPY Orders("Order ID", "Order Date", "Ship Date", "Ship Mode", "Customer ID")
+FROM 'C:/Users/home/Desktop/Superstores/OrderData.csv'
+DELIMITER ',' CSV HEADER;
+
+3. Query used for generating Products Table;
+
+CREATE TABLE Products (
+    "Product ID" VARCHAR(20) PRIMARY KEY,
+    Category VARCHAR(50),
+    "Sub-Category" VARCHAR(50),
+    "Product Name" VARCHAR(100)
+);
+
+In keeping duplicates, we Temporarily Drop the Unique Constraint for 'Products' using the query below;
+
+ALTER TABLE Products DROP CONSTRAINT products_pkey;
+
+There exist more than 100 characters in the product name column, we had to increase the limit to 200 using the query below;
+
+ALTER TABLE Products
+ALTER COLUMN "Product Name" TYPE VARCHAR(200);
+
+Lastly the Product copy query is as shown below;
+
+COPY Products("Product ID", Category, "Sub-Category", "Product Name")
+FROM 'C:/Users/home/Desktop/Superstores/Product.csv'
+DELIMITER ',' CSV HEADER;
+
+4. The following steps were performed in creating the Sales table as duplicates data especially for the order ID cannot be permissible.
+
+At this point, we now have to remove the duplicates to get aan accurate sales data. This was a manipulation that we performed to ensure that the needed tables were created
+Otherwise, we would not be able to create the customers, orders, products table. Hence the need for the duplicate earlier.
+
+a. Now we have to remove the duplicates by firstly Identify Duplicate Values:
+
+We ran a query to identify the duplicate "Order ID" values in the 'Orders' table using the below query:
+
+Copy code
+SELECT "Order ID", COUNT(*) AS Count
+FROM Orders
+GROUP BY "Order ID"
+HAVING COUNT(*) > 1;
+
+b. We now remove duplicate rows based on the "Order ID" column and make them unique, 
+by deleting the duplicate rows while retaining only one occurrence of each "Order ID" using the below query
+
+DELETE FROM Orders
+WHERE ctid NOT IN (
+    SELECT MIN(ctid)
+    FROM Orders
+    GROUP BY "Order ID"
+);
+
+c. Since "Order ID" in the 'Orders' table needs to be referenced by the 'Sales' table, 
+we add a unique constraint to the "Order ID" column in the 'Orders' table using the below query:
+
+ALTER TABLE Orders
+ADD CONSTRAINT unique_order_id UNIQUE ("Order ID");
+
+d. Same was done for the product table using the below query;
+
+ALTER TABLE Products
+ADD CONSTRAINT unique_product_id UNIQUE ("Product ID");
+
+After removing duplicates then we proceeded to creating the Sales table without duplicates using the below query;
+
+CREATE TABLE Sales (
+    "Order ID" VARCHAR(20) REFERENCES Orders("Order ID"),
+    "Product ID" VARCHAR(20) REFERENCES Products("Product ID"),
+    Sales DECIMAL(10, 2),
+    Quantity INT,
+    Discount DECIMAL(5, 2),
+    Profit DECIMAL(10, 2)
+);
+
+Lastly the Sales copy query is as shown below to copy data from the csv to the postgresql table;
+
+COPY Sales("Order ID", "Product ID", Sales, Quantity, Discount, Profit)
+FROM 'C:/Users/home/Desktop/Superstores/Sales.csv'
+DELIMITER ',' CSV HEADER;
+
+
+5. Query used for generating Products Table;
+
+CREATE TABLE Geography (
+    Order_ID VARCHAR(20),  -- Assuming Order ID is a unique identifier for orders
+    Country VARCHAR(50),
+    City VARCHAR(50),
+    State VARCHAR(50),
+    Postal_Code VARCHAR(20),
+    Region VARCHAR(50)
+);
+
+See the order copy query below to copy data from the csv to the postgresql table;
+
+COPY Geography(Order_ID, Country, City, State, Postal_Code, Region)
+FROM 'C:/Users/home/Desktop/Superstores/geography.csv'
+DELIMITER ',' CSV HEADER;
+
+THE DATA ANALYSIS
+
+1. Using SQL QUERY to Determine total sales by segment;
+
+SELECT Segment, SUM(Sales) AS TotalSales
+FROM Sales
+JOIN Orders ON Sales."Order ID" = Orders."Order ID"
+JOIN Customers ON Orders."Customer ID" = Customers."Customer ID"
+GROUP BY Segment;
+
+Outcome was visualised on SQL with PNG Image on a Bar chart
+
+2. Using SQL QUERY to Determine Sales by Geographic Region;
+
+SELECT g.Country, g.Region, SUM(s.Sales) AS TotalSales
+FROM Sales s
+JOIN Orders o ON s."Order ID" = o."Order ID"
+JOIN Geography g ON o."Order ID" = g.Order_ID
+GROUP BY g.Country, g.Region;
+
+
+Outcome was visualised on SQL with PNG Image on a Bar chart
+
+ADDITIONAL FACTORS TO CONSIDER
+
+1. Time-based Analysis:
+
+Analyzing sales and profitability trends over time, such as monthly, quarterly, or yearly patterns.
+
+SELECT DATE_TRUNC('year', orders."Order Date") AS Year,
+       SUM(sales.Sales) AS TotalSales,
+       SUM(sales.Profit) AS TotalProfit
+FROM orders
+JOIN sales ON orders."Order ID" = sales."Order ID"
+GROUP BY Year
+ORDER BY Year;
+
+2. Product Category Performance (Total Sales and Profits by Category)
+
+SELECT Category,
+       SUM(Sales) AS TotalSales,
+       SUM(Profit) AS TotalProfit
+FROM Products
+JOIN Sales ON Products."Product ID" = Sales."Product ID"
+GROUP BY Category
+ORDER BY TotalSales DESC; -- or ORDER BY TotalProfit DESC for profitability
+
+3. Customer Behavior (Customer Purchase Frequency):
+
+SELECT Customers."Customer ID",
+       Customers."Customer Name",
+       COUNT(DISTINCT Orders."Order ID") AS PurchaseFrequency
+FROM Customers
+JOIN Orders ON Customers."Customer ID" = Orders."Customer ID"
+GROUP BY Customers."Customer ID", Customers."Customer Name"
+ORDER BY PurchaseFrequency DESC;
+
+4. Promotions and Discounts (Effect of Discounts on Profits)
+
+SELECT Discount,
+       SUM(Profit) AS TotalProfit
+FROM Sales
+GROUP BY Discount
+ORDER BY Discount;
