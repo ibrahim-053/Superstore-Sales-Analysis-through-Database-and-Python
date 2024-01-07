@@ -155,16 +155,54 @@ GROUP BY Segment;
 
 Outcome was visualised on SQL with PNG Image on a Bar chart
 
+SELECT p."Sub-Category", SUM(s.Sales) AS TotalSales
+FROM Sales s
+JOIN Orders o ON s."Order ID" = o."Order ID"
+JOIN Customers c ON o."Customer ID" = c."Customer ID"
+JOIN Products p ON s."Product ID" = p."Product ID"
+GROUP BY p."Sub-Category";
+
+Analyzing the total sales based on the Sub-Category of products
+
+SELECT p."Sub-Category", SUM(s.Sales) AS TotalSales
+FROM Sales s
+JOIN Orders o ON s."Order ID" = o."Order ID"
+JOIN Customers c ON o."Customer ID" = c."Customer ID"
+JOIN Products p ON s."Product ID" = p."Product ID"
+GROUP BY p."Sub-Category";
+
+Analyzing the total Profit based on the Sub-Category of products
+
+SELECT p."Sub-Category", SUM(s.Profit) AS TotalProfit
+FROM Sales s
+JOIN Orders o ON s."Order ID" = o."Order ID"
+JOIN Customers c ON o."Customer ID" = c."Customer ID"
+JOIN Products p ON s."Product ID" = p."Product ID"
+GROUP BY p."Sub-Category";
+
+RECOMMENDATION: Superstore should focus on optimizing marketing strategies and inventory management 
+tailored to high-profit product categories for enhanced profitability.
+
 2. Using SQL QUERY to Determine Sales by Geographic Region;
 
-SELECT g.Country, g.Region, SUM(s.Sales) AS TotalSales
+SELECT g.Country, g.State, SUM(s.Sales) AS TotalSales
 FROM Sales s
 JOIN Orders o ON s."Order ID" = o."Order ID"
 JOIN Geography g ON o."Order ID" = g.Order_ID
-GROUP BY g.Country, g.Region;
-
+GROUP BY g.Country, g.State;
 
 Outcome was visualised on SQL with PNG Image on a Bar chart
+
+RECOMMENDATION: Superstore should implement targeted regional marketing campaigns and operational adjustments 
+based on high-sales states for an improved revenue generation and profitability.
+
+Also for Profit analysis
+
+SELECT g.Country, g.State, SUM(s.Profit) AS TotalProfit
+FROM Sales s
+JOIN Orders o ON s."Order ID" = o."Order ID"
+JOIN Geography g ON o."Order ID" = g.Order_ID
+GROUP BY g.Country, g.State;
 
 ADDITIONAL FACTORS TO CONSIDER
 
@@ -172,13 +210,16 @@ ADDITIONAL FACTORS TO CONSIDER
 
 Analyzing sales and profitability trends over time, such as monthly, quarterly, or yearly patterns.
 
-SELECT DATE_TRUNC('year', orders."Order Date") AS Year,
+SELECT DATE_TRUNC('month', orders."Order Date") AS Month,
        SUM(sales.Sales) AS TotalSales,
        SUM(sales.Profit) AS TotalProfit
 FROM orders
 JOIN sales ON orders."Order ID" = sales."Order ID"
-GROUP BY Year
-ORDER BY Year;
+GROUP BY Month
+ORDER BY Month;
+
+RECOMMENDATION: Superstore should develop dynamic monthly sales-driven strategies and operational optimizations 
+so as to leverage high-profit months to boost overall profitability.
 
 2. Product Category Performance (Total Sales and Profits by Category)
 
@@ -190,6 +231,9 @@ JOIN Sales ON Products."Product ID" = Sales."Product ID"
 GROUP BY Category
 ORDER BY TotalSales DESC; -- or ORDER BY TotalProfit DESC for profitability
 
+RECOMMENDATION: Strategically allocate resources and marketing efforts towards 
+high-selling product categories to maximize both sales revenue and overall profits.
+
 3. Customer Behavior (Customer Purchase Frequency):
 
 SELECT Customers."Customer ID",
@@ -200,6 +244,9 @@ JOIN Orders ON Customers."Customer ID" = Orders."Customer ID"
 GROUP BY Customers."Customer ID", Customers."Customer Name"
 ORDER BY PurchaseFrequency DESC;
 
+RECOMMENDATION: The Superstore should Implement personalized engagement strategies 
+targeting frequent purchasers to foster brand loyalty and enhance customer retention.
+
 4. Promotions and Discounts (Effect of Discounts on Profits)
 
 SELECT Discount,
@@ -207,3 +254,6 @@ SELECT Discount,
 FROM Sales
 GROUP BY Discount
 ORDER BY Discount;
+
+RECOMMENDATION: Strategize discount structures to optimize overall profits 
+without compromising margins.
