@@ -15,10 +15,12 @@ CREATE TABLE Geography (
 );
 
 CREATE TABLE Products (
+    Customer_ID VARCHAR(20) REFERENCES Customers(Customer_ID),
     Product_ID VARCHAR(20) PRIMARY KEY,
     Category VARCHAR(50),
     Sub_Category VARCHAR(50),
-    Product_Name VARCHAR(150)
+    Product_Name VARCHAR(150),
+    PRIMARY KEY(Customer_ID)
 );
 
 CREATE TABLE Sales (
@@ -31,8 +33,10 @@ CREATE TABLE Sales (
 );
 
 CREATE TABLE Orders (
+    Customer_ID VARCHAR(20) REFERENCES Customers(Customer_ID),
     Order_ID VARCHAR(20) PRIMARY KEY,
     Order_Date DATE,
     Ship_date DATE,
-    Ship_mode VARCHAR(50)
+    Ship_mode VARCHAR(50),
+    PRIMARY KEY(Customer_ID)
 );
