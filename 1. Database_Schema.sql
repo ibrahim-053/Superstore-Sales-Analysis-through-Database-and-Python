@@ -19,8 +19,7 @@ CREATE TABLE Products (
     Product_ID VARCHAR(20) PRIMARY KEY,
     Category VARCHAR(50),
     Sub_Category VARCHAR(50),
-    Product_Name VARCHAR(150),
-    PRIMARY KEY(Customer_ID)
+    Product_Name VARCHAR(150)
 );
 
 CREATE TABLE Sales (
@@ -37,6 +36,5 @@ CREATE TABLE Orders (
     Order_ID VARCHAR(20) PRIMARY KEY,
     Order_Date DATE,
     Ship_date DATE,
-    Ship_mode VARCHAR(50),
-    PRIMARY KEY(Customer_ID)
+    Ship_mode VARCHAR(50)
 );
